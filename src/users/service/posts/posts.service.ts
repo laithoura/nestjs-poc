@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PostEntity } from 'src/typeorm/entities/post.entity';
 import { Repository } from 'typeorm';
@@ -16,28 +16,28 @@ export class PostsService {
     async createUserPost(createPost: CreateUserPostParams) : Promise<PostEntity> {
         const user = await this.usersService.fetchUserById(createPost.userId);
         if (!user) {
-            throw new HttpException('User Id ' + createPost.userId + ' not found', HttpStatus.BAD_REQUEST);
+            throw new BadRequestException('User Id ' + createPost.userId + ' not found');
         }
 
         delete createPost['userId'];
-        const newPost = await this.postRepository.create({...createPost, user, createdAt: new Date()});
+        const newPost = this.postRepository.create({...createPost, user, createdAt: new Date()});
         const savedPost = await this.postRepository.save(newPost);
-        return await this.fetchUserPostById(savedPost.id);
+        return this.fetchUserPostById(savedPost.id);
     }
 
     async updateUserPost(id: number, updatePost: UpdateUserPostParams) : Promise<PostEntity> {
         const exsit = this.postRepository.countBy({id});
         if (!exsit) {
-            throw new HttpException('Post Id ' + id + ' not found', HttpStatus.BAD_REQUEST);
+            throw new BadRequestException('Post Id ' + id + ' not found');
         }
 
         delete updatePost['userId'];
-        await this.postRepository.update({id}, {...updatePost, updatedAt: new Date()});
-        return await this.fetchUserPostById(id);
+        this.postRepository.update({id}, {...updatePost, updatedAt: new Date()});
+        return this.fetchUserPostById(id);
     }
 
     async fetchAllUserPosts(): Promise<PostEntity[]> {
-        return await this.postRepository.find({
+        return this.postRepository.find({
             loadRelationIds: true
         });
     }
@@ -48,7 +48,7 @@ export class PostsService {
             relations: ['user'],
         });
         if (!post) {
-            throw new HttpException('Post Id ' + id + ' not found', HttpStatus.BAD_REQUEST);
+            throw new BadRequestException('Post Id ' + id + ' not found');
         }
 
         return post;

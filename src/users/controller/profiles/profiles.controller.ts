@@ -1,81 +1,62 @@
-import { Body, Controller, Get, HttpCode, HttpException, HttpStatus, Param, Query, ParseIntPipe, Post, Put, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags, getSchemaPath } from '@nestjs/swagger';
-import { ApiResponseDto } from 'src/common/dtos/open-api-response.dto';
+import { Body, Controller, Get, HttpException, HttpStatus, Param, Query, ParseIntPipe, Post, Put, UseGuards, UseInterceptors, ClassSerializerInterceptor, BadRequestException } from '@nestjs/common';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PageOptionsDto } from 'src/common/dtos/page-options.dto';
 import { PageDto } from 'src/common/dtos/page.dto';
-import { ApiOkObjectResponse, ApiOkArrayResponse, ApiPaginatedResponse } from 'src/swagger/api-response.decorator';
+import { ApiOkObjectResponse, ApiOkArrayResponse, ApiPaginatedResponse, ApiCreatedObjectResponse } from 'src/common/api-doc/api-response.decorator';
 import { ProfileEntity } from 'src/typeorm/entities/profile.entity';
 import { CreateUserProfileDto } from 'src/users/dtos/create-user-profile.dto';
 import { UpdateUserProfileDto } from 'src/users/dtos/update-user-profile.dto';
 import { ProfilesGuard } from 'src/users/guard/profiles/profiles.guard';
+import { CreatedApiResponseInterceptor } from 'src/common/interceptor/api-response/created-api-response.interceptor';
+import { OkApiResponseInterceptor } from 'src/common/interceptor/api-response/ok-api-response.interceptor';
 import { ProfilesService } from 'src/users/service/profiles/profiles.service';
 
 @ApiTags('User Profile')
-@UseGuards(ProfilesGuard)
-@Controller('/profiles')
+@UseGuards(ProfilesGuard) // User Guard at Class Level
+@UseInterceptors(ClassSerializerInterceptor)
+@Controller('profiles')
 export class ProfilesController {
     constructor(private profilesService: ProfilesService) {
         console.log('Init Profiles Service')
     }
 
     @Post()
-    @HttpCode(HttpStatus.CREATED)
-    @UsePipes(new ValidationPipe())
     @ApiOperation({ summary: 'Create new user profile' })
-    @ApiResponse({status: HttpStatus.CREATED, description: 'Created Successfully', schema: {
-            allOf: [
-                { $ref: getSchemaPath(ApiResponseDto) }, /* Wrapper Class */
-                { properties: { data: { $ref: getSchemaPath(ProfileEntity)} } } /* Generic Class */
-            ],
-        }
-    })
-    async createUserProfile(@Body() userProfile: CreateUserProfileDto) : Promise<ApiResponseDto<ProfileEntity>> {
-        return new ApiResponseDto<ProfileEntity>(
-            HttpStatus.CREATED,
-            'Created',
-            await this.profilesService.createUserProfile(userProfile.userId, userProfile)
-        )
+    @ApiCreatedObjectResponse(ProfileEntity, 'Created Successfully')
+    @UseInterceptors(CreatedApiResponseInterceptor)
+    async createUserProfile(@Body() userProfile: CreateUserProfileDto) : Promise<ProfileEntity> {
+        return this.profilesService.createUserProfile(userProfile.userId, userProfile);
     }
 
     @Put(':id')
-    @HttpCode(HttpStatus.OK)
-    @UsePipes(new ValidationPipe())
     @ApiOperation({ summary: 'Update user profile' })
-    @ApiOkObjectResponse(ProfileEntity, HttpStatus.OK, 'Updated Successfully')
+    @ApiOkObjectResponse(ProfileEntity, 'Updated Successfully')
+    @UseInterceptors(OkApiResponseInterceptor)
     async updateUserProfile(
         @Param('id', ParseIntPipe) id: number,
-        @Body() userProfile: UpdateUserProfileDto) :Promise<ApiResponseDto<ProfileEntity>>{
+        @Body() userProfile: UpdateUserProfileDto) :Promise<ProfileEntity> {
         if (id != userProfile.id) {
-            throw new HttpException('Profile ID ' + id + ' not found', HttpStatus.BAD_REQUEST);
+            throw new BadRequestException('Profile Id ' + id + ' not found');
         }
 
         const updatedUserProfile = await this.profilesService.updateUserProfile(id, userProfile.userId, userProfile);
         if (!updatedUserProfile) {
-            throw new HttpException('Profile ID ' + id + ' not found', HttpStatus.BAD_REQUEST);
+            throw new BadRequestException('Profile Id ' + id + ' not found');
         }
 
-        return new ApiResponseDto<ProfileEntity>(
-            HttpStatus.OK,
-            'Updated',
-            updatedUserProfile
-        )
+        return updatedUserProfile;
     }
 
     @Get('all')
-    @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Get All User Profiles' })
-    @ApiOkArrayResponse(ProfileEntity, HttpStatus.OK, 'Success')
-    async fetchAllProfiles() : Promise<ApiResponseDto<ProfileEntity[]>> {
-        return new ApiResponseDto<ProfileEntity[]>(
-            HttpStatus.OK,
-            'Success',
-            await this.profilesService.fetchAllProfiles()
-        )
+    @ApiOkArrayResponse(ProfileEntity, 'Success')
+    @UseInterceptors(OkApiResponseInterceptor)
+    async fetchAllProfiles() : Promise<ProfileEntity[]> {
+        return this.profilesService.fetchAllProfiles()
     }
 
 
     @Get('paging')
-    @HttpCode(HttpStatus.OK)
     @ApiOperation({summary: 'Get User Profiles Pagination'})
     @ApiPaginatedResponse(ProfileEntity, HttpStatus.OK, 'Success')
     async getPagingProfiles(
@@ -84,14 +65,10 @@ export class ProfilesController {
     }
 
     @Get(':id')
-    @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Get User Profile By Id' })
-    @ApiOkObjectResponse(ProfileEntity, HttpStatus.OK, 'Success')
-    async fetchProfileById(@Param('id', ParseIntPipe) id: number) : Promise<ApiResponseDto<ProfileEntity>> {
-        return new ApiResponseDto<ProfileEntity>(
-            HttpStatus.OK,
-            'Success',
-            await this.profilesService.fetchUserProfileById(id)
-        )
+    @ApiOkObjectResponse(ProfileEntity, 'Success')
+    @UseInterceptors(OkApiResponseInterceptor)
+    async fetchProfileById(@Param('id', ParseIntPipe) id: number) : Promise<ProfileEntity> {
+        return this.profilesService.fetchUserProfileById(id);
     }
 }

@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProfileEntity } from 'src/typeorm/entities/profile.entity';
 import { UserEntity } from 'src/typeorm/entities/user.entity';
@@ -25,27 +25,27 @@ export class UsersService {
             return await this.userRepository.save(newUser)
         } catch(error) {
             console.error('Error Creating User : ', error);
-            throw new HttpException('Email already exist!', HttpStatus.BAD_REQUEST);
+            throw new BadRequestException('Email already exist!');
         }
     }
 
     async updateUser(id: number, updateUserDetails: UpdateUserParams): Promise<UserEntity> {
+        const duplicateUser = await this.userRepository.findOneBy({email: updateUserDetails.email})
+        if (duplicateUser && duplicateUser.id != id) {
+            throw new BadRequestException('Email already exist!');
+        }
+
+        const count = await this.userRepository.countBy({id});
+        if (count < 1) {
+            throw new BadRequestException('User Id ' + id + ' not found');
+        }
+
         try {
-            const duplicateUser = await this.userRepository.findOneBy({email: updateUserDetails.email})
-            if (duplicateUser && duplicateUser.id != id) {
-                throw new HttpException('Email already exist!', HttpStatus.BAD_REQUEST);
-            }
-    
-            const count = await this.userRepository.countBy({id});
-            if (count < 1) {
-                throw new HttpException('User Id ' + id + ' not found', HttpStatus.BAD_REQUEST);
-            }
-    
             await this.userRepository.update({ id }, { ...updateUserDetails });
             return await this.userRepository.findOneBy({id})
         } catch(error) {
             console.error('Error Updating User : ', error);
-            throw new HttpException('Failed to update user', HttpStatus.BAD_REQUEST);
+            throw new BadRequestException('Failed to update user');
         }
     }
 
@@ -70,7 +70,7 @@ export class UsersService {
     async userExistOrElseThrowException(id: number): Promise<Boolean> {
       const userExist = await this.userExist(id);
       if (!userExist) {
-        throw new HttpException('User Id ' + id + ' not found', HttpStatus.BAD_REQUEST)
+        throw new BadRequestException('User Id ' + id + ' not found')
       }
       return true;
     }
@@ -82,12 +82,12 @@ export class UsersService {
     async updateUserProfile(id: number, profileId: number): Promise<UserEntity> {
         const user = await this.fetchUserById(id);
         if (!user) {
-            throw new HttpException('User Id ' + id + ' not found', HttpStatus.BAD_REQUEST);
+            throw new BadRequestException('User Id ' + id + ' not found');
         }
 
         const profile = await this.profileRepository.findOneBy({id: profileId});
         if (!profile) {
-            throw new HttpException('Profile Id ' + profileId + ' not found', HttpStatus.BAD_REQUEST);
+            throw new BadRequestException('Profile Id ' + profileId + ' not found');
         }
 
         user.profile = profile;

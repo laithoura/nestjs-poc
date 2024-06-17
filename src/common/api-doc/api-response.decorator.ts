@@ -1,5 +1,5 @@
-import { applyDecorators, Type } from "@nestjs/common";
-import { ApiExtraModels, ApiOkResponse, getSchemaPath } from "@nestjs/swagger";
+import { applyDecorators, HttpStatus, Type } from "@nestjs/common";
+import { ApiCreatedResponse, ApiExtraModels, ApiOkResponse, getSchemaPath } from "@nestjs/swagger";
 import { ApiResponseDto } from "src/common/dtos/open-api-response.dto";
 import { PageDto } from "src/common/dtos/page.dto";
 
@@ -26,29 +26,62 @@ export const ApiPaginatedResponse = <TModel extends Type<any>>(model: TModel, st
     );
 };
 
-export const ApiOkObjectResponse = <TModel extends Type<any>>(model: TModel, statusCode: number, description: string) => {
+export const ApiCreatedObjectResponse = <TModel extends Type<any>>(model: TModel, description: string) => {
   return applyDecorators(
     ApiExtraModels(ApiResponseDto),
     ApiExtraModels(model),
-    ApiOkResponse({
-      status: statusCode,
+    ApiCreatedResponse({
+      status: HttpStatus.CREATED,
       description: description,
       schema: {
         allOf: [
-            { $ref: getSchemaPath(ApiResponseDto) }, /* Wrapper Class */
-            { properties: { data: { $ref: getSchemaPath(model)} } } /* Generic Class */
+            { 
+              $ref: getSchemaPath(ApiResponseDto) 
+            }, /* Wrapper Class */
+            { 
+              properties: { 
+                data: { 
+                  $ref: getSchemaPath(model)
+                } 
+              } 
+          } /* Generic Class */
         ],
-    }
+      }
     }),
   );
 };
 
-export const ApiOkArrayResponse = <TModel extends Type<any>>(model: TModel, statusCode: number, description: string) => {
+export const ApiOkObjectResponse = <TModel extends Type<any>>(model: TModel, description: string) => {
   return applyDecorators(
     ApiExtraModels(ApiResponseDto),
     ApiExtraModels(model),
     ApiOkResponse({
-      status: statusCode,
+      status: HttpStatus.OK,
+      description: description,
+      schema: {
+        allOf: [
+            { 
+              $ref: getSchemaPath(ApiResponseDto) 
+            }, /* Wrapper Class */
+            { 
+              properties: { 
+                data: { 
+                  $ref: getSchemaPath(model)
+                } 
+              } 
+          } /* Generic Class */
+        ],
+      }
+    }),
+  );
+};
+
+export const ApiOkArrayResponse = <TModel extends Type<any>>(model: TModel, description: string) => {
+  return applyDecorators(
+    ApiExtraModels(ApiResponseDto),
+    ApiExtraModels(model),
+    ApiOkResponse({
+      status: HttpStatus.OK,
       description: description,
       schema: {
         allOf: [

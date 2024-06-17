@@ -22,4 +22,13 @@ export class CreateUserDto {
     @IsNotEmpty()
     @IsEmail()
     email: string
+
+    /*
+    // Nested Object Validation
+    @ValidateNested()
+    @IsNotEmptyObject()
+    @Type(() => CreateUserPostDto)
+    post: CreateUserPostDto
+    */
+
 }

@@ -1,5 +1,5 @@
-import { Body, ClassSerializerInterceptor, Controller, Delete, Get, HttpCode, HttpException, HttpStatus, Param, ParseBoolPipe, ParseIntPipe, Post, Put, Query, UseGuards, UseInterceptors, UsePipes, ValidationPipe } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags, getSchemaPath } from '@nestjs/swagger';
+import { BadRequestException, Body, ClassSerializerInterceptor, Controller, Delete, Get, HttpCode, HttpException, HttpStatus, Param, ParseBoolPipe, ParseIntPipe, Post, Put, Query, UseGuards, UseInterceptors } from '@nestjs/common';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UserEntity } from 'src/typeorm/entities/user.entity';
 import { CreateUserDto } from 'src/users/dtos/create-user.dto';
 import { PageDto } from 'src/common/dtos/page.dto';
@@ -9,11 +9,12 @@ import { UsersGuard } from 'src/users/guard/users/users.guard';
 import { ValidateCreateUserPipe } from 'src/users/pipe/validate-create-user/validate-create-user.pipe';
 import { ValidateUpdateUserPipe } from 'src/users/pipe/validate-update-user/validate-update-user.pipe';
 import { UsersService } from 'src/users/service/users/users.service';
-import { ApiResponseDto } from 'src/common/dtos/open-api-response.dto';
-import { ApiOkObjectResponse, ApiOkArrayResponse, ApiPaginatedResponse } from 'src/swagger/api-response.decorator';
+import { ApiOkObjectResponse, ApiOkArrayResponse, ApiPaginatedResponse, ApiCreatedObjectResponse } from 'src/common/api-doc/api-response.decorator';
+import { OkApiResponseInterceptor } from 'src/common/interceptor/api-response/ok-api-response.interceptor';
+import { CreatedApiResponseInterceptor } from 'src/common/interceptor/api-response/created-api-response.interceptor';
 
-@UseGuards(UsersGuard) // User Guard at Class Level
 @ApiTags('Users')
+@UseGuards(UsersGuard) // User Guard at Class Level
 @UseInterceptors(ClassSerializerInterceptor)
 @Controller('users')
 export class UsersController {
@@ -22,65 +23,42 @@ export class UsersController {
 
     // @UseGuards(UsersGuard) // User Guard at Method Level
     @Post()
-    @HttpCode(HttpStatus.CREATED)
-    @UsePipes(new ValidationPipe())
     @ApiOperation({ summary: 'Create new user' })
-    @ApiResponse({status: HttpStatus.CREATED, description: 'Created Successfully', schema: {
-            allOf: [
-                { $ref: getSchemaPath(ApiResponseDto) }, /* Wrapper Class */
-                { properties: { data: { $ref: getSchemaPath(UserEntity)} } } /* Generic Class */
-            ],
-        }
-    })
+    @ApiCreatedObjectResponse(UserEntity, 'Created Successfully')
+    @UseInterceptors(CreatedApiResponseInterceptor)
     async createUserBody(
-        @Body(ValidateCreateUserPipe) user: CreateUserDto) : Promise<ApiResponseDto<UserEntity>> {
-        return new ApiResponseDto<UserEntity>(
-            HttpStatus.CREATED,
-            'Created',
-            await this.usersService.createUser(user)
-        )
+        @Body(ValidateCreateUserPipe) user: CreateUserDto) : Promise<UserEntity> {
+        return this.usersService.createUser(user);
     }
 
-    // @UseGuards(UsersGuard) // User Guard at Method Level
     @Put(':id')
-    @HttpCode(HttpStatus.OK)
-    @UsePipes(new ValidationPipe())
     @ApiOperation({ summary: 'Update user' })
-    @ApiOkObjectResponse(UserEntity, HttpStatus.OK, 'Updated Successfully')
+    @ApiOkObjectResponse(UserEntity, 'Updated Successfully')
+    @UseInterceptors(OkApiResponseInterceptor)
     async updateUserBody(
         @Param('id', ParseIntPipe) id: number, 
-        @Body(ValidateUpdateUserPipe) user: UpdateUserDto) : Promise<ApiResponseDto<UserEntity>> {
+        @Body(ValidateUpdateUserPipe) user: UpdateUserDto) : Promise<UserEntity> {
         if (id != user.id) {
-            throw new HttpException('User ID ' + id + ' not found', HttpStatus.BAD_REQUEST);
+            throw new BadRequestException('User Id ' + id + ' not found');
         }
 
         const updatedUser = await this.usersService.updateUser(id, user);
         if (!updatedUser) {
-            throw new HttpException('User ID ' + id + ' not found', HttpStatus.BAD_REQUEST);
+            throw new BadRequestException('User Id ' + id + ' not found');
         }
 
-        return new ApiResponseDto<UserEntity>(
-            HttpStatus.OK,
-            'Created',
-            updatedUser
-        )
+        return updatedUser;
     }
 
-    // @UseGuards(UsersGuard) // User Guard at Method Level
     @Get('all')
-    @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Get All Users' })
-    @ApiOkArrayResponse(UserEntity, HttpStatus.OK, 'Success')
-    async getUsers() : Promise<ApiResponseDto<UserEntity[]>> {
-        return new ApiResponseDto<UserEntity[]>(
-            HttpStatus.OK,
-            'Success',
-            await this.usersService.fetchUsers()
-        )
+    @ApiOkArrayResponse(UserEntity, 'Success')
+    @UseInterceptors(OkApiResponseInterceptor)
+    async getUsers() : Promise<UserEntity[]> {
+        return this.usersService.fetchUsers()
     }
 
     @Get('paging')
-    @HttpCode(HttpStatus.OK)
     @ApiOperation({summary: 'Get Users Pagination'})
     @ApiPaginatedResponse(UserEntity, HttpStatus.OK, 'Success')
     async getPagingUsers(
@@ -89,28 +67,22 @@ export class UsersController {
     }
 
 
-    // @UseGuards(UsersGuard) // User Guard at Method Level
     @Get(':id')
-    @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Get User By Id' })
-    @ApiOkObjectResponse(UserEntity, HttpStatus.OK, 'Success')
+    @ApiOkObjectResponse(UserEntity, 'Success')
+    @UseInterceptors(OkApiResponseInterceptor)
     async getUserById(
         @Param('id', ParseIntPipe) id: number,
         @Query('admin', new ParseBoolPipe({ optional: true })) admin: boolean) 
-        : Promise<ApiResponseDto<UserEntity>> {
+        : Promise<UserEntity> {
         const user = await this.usersService.fetchUserById(id);
         if (!user) {
-            throw new HttpException('User ID ' + id + ' not found', HttpStatus.BAD_REQUEST);
+            throw new BadRequestException('User Id ' + id + ' not found');
         }
 
-        return new ApiResponseDto<UserEntity>(
-            HttpStatus.OK,
-            'Success',
-            user
-        )
+        return user;
     }
 
-    // @UseGuards(UsersGuard) // User Guard at Method Level
     @Delete(':id')
     @HttpCode(HttpStatus.NO_CONTENT)
     @ApiOperation({summary: 'Delete User By Id'})
@@ -118,7 +90,7 @@ export class UsersController {
     async deleteUserById(@Param('id', ParseIntPipe) id: number) {
         const user = await this.usersService.fetchUserById(id);
         if (!user) {
-            throw new HttpException('User ID ' + id + ' not found', HttpStatus.BAD_REQUEST);
+            throw new BadRequestException('User Id ' + id + ' not found');
         }
 
         await this.usersService.deleteUserById(id)

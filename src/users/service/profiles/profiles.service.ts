@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProfileEntity } from 'src/typeorm/entities/profile.entity';
 import { Repository } from 'typeorm';
@@ -26,34 +26,30 @@ export class ProfilesService {
 
         const savedProfile = await this.profileRepository.save(newProfile);
     
-        await this.usersService.updateUserProfile(userId, savedProfile.id);
+        this.usersService.updateUserProfile(userId, savedProfile.id);
 
         return savedProfile;
     }
 
     async updateUserProfile(id: number, userId: number, updateProfile: UpdateUserProfileParams): Promise<ProfileEntity> {
+        const exist = await this.profileRepository.countBy({id}) > 0;
+        if (!exist) {
+            throw new BadRequestException('Profile Id ' + id + ' not found');
+        }
+
         try {    
-            const exist = await this.profileRepository.countBy({id});
-            if (!exist) {
-                throw new HttpException('Profile Id ' + id + ' not found', HttpStatus.BAD_REQUEST);
-            }
-    
-            console.log(updateProfile);
             delete updateProfile['userId'];
             await this.profileRepository.update({ id }, { ...updateProfile, updatedAt: new Date() });
             await this.usersService.updateUserProfile(userId, id);
             return await this.fetchUserProfileById(id);
         } catch(error) {
             console.error('Error Updating User Profile : ', error);
-            throw new HttpException('Failed to update user profile', HttpStatus.BAD_REQUEST);
+            throw new BadRequestException('Failed to update user profile');
         }
     }
 
     async fetchUserProfileById(id: number): Promise<ProfileEntity> {
-        return await this.profileRepository.findOne({
-            where: {id},
-            relations: ['user']
-        })
+        return await this.profileRepository.findOneBy({id})
     }
 
     async fetchAllProfiles(): Promise<ProfileEntity[]> {

@@ -1,4 +1,4 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { UsersController } from './controller/users/users.controller';
 import { UsersService } from './service/users/users.service';
 import { UsersMiddleware } from './middlewares/users/users.middleware';
@@ -12,6 +12,7 @@ import { PostEntity } from 'src/typeorm/entities/post.entity';
 import { PostsController } from './controller/posts/posts.controller';
 import { PostsService } from './service/posts/posts.service';
 import { PostsMiddleware } from './middlewares/posts/posts.middleware';
+import { NextFunction, Response } from 'express';
 
 @Module({
   imports: [TypeOrmModule.forFeature([UserEntity, ProfileEntity, PostEntity])],
@@ -28,9 +29,28 @@ export class UsersModule implements NestModule {
       method: RequestMethod.GET
     })
     */
-    consumer.apply(UsersMiddleware).forRoutes(UsersController)
-    consumer.apply(ProfilesMiddleware).forRoutes(ProfilesController)
-    consumer.apply(PostsMiddleware).forRoutes(PostsController)
+    consumer
+      .apply(UsersMiddleware)
+      .exclude({
+        path: 'excluded-path',
+        method: RequestMethod.GET
+      })
+      .forRoutes(UsersController);
+
+    consumer
+      .apply(ProfilesMiddleware)
+      .forRoutes(ProfilesController);
+    
+    consumer
+      .apply(PostsMiddleware)
+      .forRoutes(PostsController);
+
+
+    /* Test Arrow Function Middle */
+    consumer.apply((req: Request, res: Response, next: NextFunction) => {
+      console.log('Arrow Function Middleware');
+      next();
+    }).forRoutes(UsersController, ProfilesController, PostsController);
   }
 
 }

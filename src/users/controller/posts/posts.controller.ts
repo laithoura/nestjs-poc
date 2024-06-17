@@ -1,10 +1,17 @@
-import { Body, Controller, Get, HttpCode, HttpException, HttpStatus, Param, ParseIntPipe, Post, Put, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { BadRequestException, Body, ClassSerializerInterceptor, Controller, Get, HttpException, HttpStatus, Param, ParseIntPipe, Post, Put, UseGuards, UseInterceptors } from '@nestjs/common';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiCreatedObjectResponse, ApiOkArrayResponse, ApiOkObjectResponse } from 'src/common/api-doc/api-response.decorator';
+import { PostEntity } from 'src/typeorm/entities/post.entity';
 import { CreateUserPostDto } from 'src/users/dtos/create-user-post.dto';
 import { UpdateUserPostDto } from 'src/users/dtos/update-user-post.dto';
 import { PostsGuard } from 'src/users/guard/posts/posts.guard';
+import { CreatedApiResponseInterceptor } from 'src/common/interceptor/api-response/created-api-response.interceptor';
+import { OkApiResponseInterceptor } from 'src/common/interceptor/api-response/ok-api-response.interceptor';
 import { PostsService } from 'src/users/service/posts/posts.service';
 
-@UseGuards(PostsGuard)
+@ApiTags('User Post')
+@UseGuards(PostsGuard) // User Guard at Class Level
+@UseInterceptors(ClassSerializerInterceptor)
 @Controller('posts')
 export class PostsController {
 
@@ -13,59 +20,47 @@ export class PostsController {
     }
 
     @Post()
-    @HttpCode(HttpStatus.CREATED)
-    @UsePipes(new ValidationPipe())
-    async createUserPost(@Body() post: CreateUserPostDto) {
-        return {
-            statusCode: HttpStatus.CREATED,
-            message: 'Created',
-            data: await this.postsService.createUserPost(post)
-        }
+    @ApiOperation({ summary: 'Create new post' })
+    @ApiCreatedObjectResponse(PostEntity, 'Created Successfully')
+    @UseInterceptors(CreatedApiResponseInterceptor)
+    async createUserPost(@Body() post: CreateUserPostDto) : Promise<PostEntity> {
+        return this.postsService.createUserPost(post);
     }
 
     @Put(':id')
-    @HttpCode(HttpStatus.OK)
-    @UsePipes(new ValidationPipe())
-    async updateUserPost(@Param('id', ParseIntPipe) id: number, @Body() post: UpdateUserPostDto) {
+    @ApiOperation({ summary: 'Update post' })
+    @ApiOkArrayResponse(PostEntity, 'Updated Successfully')
+    @UseInterceptors(OkApiResponseInterceptor)
+    async updateUserPost(@Param('id', ParseIntPipe) id: number, @Body() post: UpdateUserPostDto) : Promise<PostEntity> {
         if (id != post.id) {
-            throw new HttpException('User ID ' + id + ' not found', HttpStatus.BAD_REQUEST);
+            throw new BadRequestException('User Id ' + id + ' not found');
         }
 
-        return {
-            statusCode: HttpStatus.OK,
-            message: 'Updated',
-            data: await this.postsService.updateUserPost(id, post)
-        }
+        return this.postsService.updateUserPost(id, post);
     }
 
     @Get()
-    @HttpCode(HttpStatus.OK)
-    async getAllUserPost() {
-        return {
-            statusCode: HttpStatus.OK,
-            message: 'Success',
-            data: await this.postsService.fetchAllUserPosts()
-        }
+    @ApiOperation({ summary: 'Get All Posts' })
+    @ApiOkArrayResponse(PostEntity, 'Success')
+    @UseInterceptors(OkApiResponseInterceptor)
+    async getAllUserPost() : Promise<PostEntity[]> {
+        return this.postsService.fetchAllUserPosts()
     }
 
     @Get(':id')
-    @HttpCode(HttpStatus.OK)
-    async getUserPostById(@Param('id', ParseIntPipe) id: number) {
-        return {
-            statusCode: HttpStatus.OK,
-            message: 'Success',
-            data: await this.postsService.fetchUserPostById(id)
-        }
+    @ApiOperation({ summary: 'Get Post By Id' })
+    @ApiOkObjectResponse(PostEntity, 'Success')
+    @UseInterceptors(OkApiResponseInterceptor)
+    async getUserPostById(@Param('id', ParseIntPipe) id: number): Promise<PostEntity> {
+        return this.postsService.fetchUserPostById(id)
     }
 
     @Get('/users/:userId')
-    @HttpCode(HttpStatus.OK)
-    async getUserPostByUserId(@Param('userId', ParseIntPipe) userId: number) {
-        return {
-            statusCode: HttpStatus.OK,
-            message: 'Success',
-            data: await this.postsService.fetchUserPostByUserId(userId)
-        }
+    @ApiOperation({ summary: 'Get Posts By User Id' })
+    @ApiOkObjectResponse(PostEntity, 'Success')
+    @UseInterceptors(OkApiResponseInterceptor)
+    async getUserPostByUserId(@Param('userId', ParseIntPipe) userId: number) : Promise<PostEntity[]> {
+        return this.postsService.fetchUserPostByUserId(userId);
     }
 
 }
