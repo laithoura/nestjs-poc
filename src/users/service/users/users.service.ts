@@ -1,0 +1,112 @@
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { ProfileEntity } from 'src/typeorm/entities/profile.entity';
+import { UserEntity } from 'src/typeorm/entities/user.entity';
+import { PageDto } from 'src/common/dtos/page.dto';
+import { PageMetaDto } from 'src/common/dtos/page-meta.dto';
+import { PageOptionsDto } from 'src/common/dtos/page-options.dto';
+import { DeleteResult, Repository } from 'typeorm';
+
+@Injectable()
+export class UsersService {
+
+    constructor(
+        @InjectRepository(UserEntity) private userRepository: Repository<UserEntity>,
+        @InjectRepository(ProfileEntity) private profileRepository: Repository<ProfileEntity>) {
+        console.log('Init UsersService Constructor');
+    }
+
+    async createUser(createUserDetails: CreateUserParams): Promise<UserEntity> {
+        try {
+            const newUser = this.userRepository.create({
+                ...createUserDetails
+            });
+    
+            return await this.userRepository.save(newUser)
+        } catch(error) {
+            console.error('Error Creating User : ', error);
+            throw new HttpException('Email already exist!', HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    async updateUser(id: number, updateUserDetails: UpdateUserParams): Promise<UserEntity> {
+        try {
+            const duplicateUser = await this.userRepository.findOneBy({email: updateUserDetails.email})
+            if (duplicateUser && duplicateUser.id != id) {
+                throw new HttpException('Email already exist!', HttpStatus.BAD_REQUEST);
+            }
+    
+            const count = await this.userRepository.countBy({id});
+            if (count < 1) {
+                throw new HttpException('User Id ' + id + ' not found', HttpStatus.BAD_REQUEST);
+            }
+    
+            await this.userRepository.update({ id }, { ...updateUserDetails });
+            return await this.userRepository.findOneBy({id})
+        } catch(error) {
+            console.error('Error Updating User : ', error);
+            throw new HttpException('Failed to update user', HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    async fetchUsers(): Promise<UserEntity[]> {
+        return await this.userRepository.find({
+            relations: ['profile'],
+            /* relations: ['profile', 'posts'] */
+        });
+    }
+
+    async fetchUserById(id: number): Promise<UserEntity> {
+        return await this.userRepository.findOne({
+            where: {id: id},
+            relations: ['profile', 'posts'],
+        })
+    }
+
+    async userExist(id: number): Promise<Boolean> {
+        return await this.userRepository.countBy({id: id}) > 0;
+    }
+
+    async userExistOrElseThrowException(id: number): Promise<Boolean> {
+      const userExist = await this.userExist(id);
+      if (!userExist) {
+        throw new HttpException('User Id ' + id + ' not found', HttpStatus.BAD_REQUEST)
+      }
+      return true;
+    }
+
+    async deleteUserById(id: number): Promise<DeleteResult> {
+        return await this.userRepository.delete({id: id})
+    }
+
+    async updateUserProfile(id: number, profileId: number): Promise<UserEntity> {
+        const user = await this.fetchUserById(id);
+        if (!user) {
+            throw new HttpException('User Id ' + id + ' not found', HttpStatus.BAD_REQUEST);
+        }
+
+        const profile = await this.profileRepository.findOneBy({id: profileId});
+        if (!profile) {
+            throw new HttpException('Profile Id ' + profileId + ' not found', HttpStatus.BAD_REQUEST);
+        }
+
+        user.profile = profile;
+        return await this.userRepository.save(user);
+    }
+
+    public async getPagingUsers(pageOptionsDto: PageOptionsDto): Promise<PageDto<UserEntity>> {
+        const queryBuilder = this.userRepository.createQueryBuilder("users");
+
+        queryBuilder
+            .orderBy("users.created_at", pageOptionsDto.order)
+            .skip(pageOptionsDto.skip)
+            .take(pageOptionsDto.limit);
+
+        const itemCount = await queryBuilder.getCount();
+        const { entities } = await queryBuilder.getRawAndEntities();
+
+        const pageMetaDto = new PageMetaDto({ itemCount, pageOptionsDto });
+
+        return new PageDto(entities, pageMetaDto);
+    }
+}
