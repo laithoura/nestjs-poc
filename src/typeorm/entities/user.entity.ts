@@ -3,6 +3,7 @@ import { ProfileEntity } from "./profile.entity";
 import { PostEntity } from "./post.entity";
 import { AbstractEntity } from "src/common/entities/abstract.entity";
 import { ApiProperty } from "@nestjs/swagger";
+import { Exclude } from "class-transformer";
 
 @Entity('users')
 export class UserEntity extends AbstractEntity {
@@ -11,17 +12,13 @@ export class UserEntity extends AbstractEntity {
     @PrimaryGeneratedColumn({name: 'id', type: 'bigint'})
     id: number;
 
-    @ApiProperty({default: 'Name'})
-    @Column({name: 'name', type: 'varchar', nullable: false, length: 200})
-    name: string;
-
-    @ApiProperty({default: 1})
-    @Column({name: 'age', type: 'int', nullable: false})
-    age: number;
-
     @ApiProperty({default: 'dev@gmail.com'})
     @Column({name: 'email', type: 'varchar', nullable: false, unique: true, length: 200})
     email: string;
+
+    @Exclude()
+    @Column({name: 'password', type: 'varchar', nullable: false, length: 200})
+    password: string;
 
     @ApiProperty()
     @OneToOne(() => ProfileEntity)

@@ -21,8 +21,8 @@ export class ProfileEntity extends AbstractEntity {
   @Column({name: 'age', type: 'int', nullable: false})
   age: number;
 
-  @ApiProperty({default: new Date()})
-  @Column({name: 'dob', type: 'timestamp', nullable: false})
+  @ApiProperty()
+  @Column({name: 'dob', type: 'timestamp', nullable: false, default: () => 'CURRENT_TIMESTAMP'})
   dob: Date;
 
 }

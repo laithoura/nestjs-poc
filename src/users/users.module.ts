@@ -3,19 +3,17 @@ import { UsersController } from './controller/users/users.controller';
 import { UsersService } from './service/users/users.service';
 import { UsersMiddleware } from './middlewares/users/users.middleware';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UserEntity } from 'src/typeorm/entities/user.entity';
-import { ProfileEntity } from 'src/typeorm/entities/profile.entity';
 import { ProfilesController } from './controller/profiles/profiles.controller';
 import { ProfilesService } from './service/profiles/profiles.service';
 import { ProfilesMiddleware } from './middlewares/profiles/profiles.middleware';
-import { PostEntity } from 'src/typeorm/entities/post.entity';
 import { PostsController } from './controller/posts/posts.controller';
 import { PostsService } from './service/posts/posts.service';
 import { PostsMiddleware } from './middlewares/posts/posts.middleware';
 import { NextFunction, Response } from 'express';
+import userEntities from 'src/typeorm/user-entities';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([UserEntity, ProfileEntity, PostEntity])],
+  imports: [TypeOrmModule.forFeature(userEntities)],
   controllers: [UsersController, ProfilesController, PostsController],
   providers: [UsersService, ProfilesService, PostsService]
 })

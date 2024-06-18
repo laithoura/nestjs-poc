@@ -1,9 +1,8 @@
 import { Module } from '@nestjs/common';
 import { UsersModule } from './users/users.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UserEntity } from './typeorm/entities/user.entity';
-import { ProfileEntity } from './typeorm/entities/profile.entity';
-import { PostEntity } from './typeorm/entities/post.entity';
+import { AuthModule } from './auth/auth.module';
+import allEntities from './typeorm/all-entities';
 
 @Module({
   imports: [
@@ -14,10 +13,11 @@ import { PostEntity } from './typeorm/entities/post.entity';
       port: 3306,
       username: 'user',
       password: 'password',
-      entities: [UserEntity, ProfileEntity, PostEntity],
+      entities: allEntities,
       database: 'nestjs-db',
       synchronize: true
-    })
+    }),
+    AuthModule
   ],
   controllers: [],
   providers: [],

@@ -1,4 +1,4 @@
-import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProfileEntity } from 'src/typeorm/entities/profile.entity';
 import { UserEntity } from 'src/typeorm/entities/user.entity';
@@ -6,6 +6,7 @@ import { PageDto } from 'src/common/dtos/page.dto';
 import { PageMetaDto } from 'src/common/dtos/page-meta.dto';
 import { PageOptionsDto } from 'src/common/dtos/page-options.dto';
 import { DeleteResult, Repository } from 'typeorm';
+import { encodePassword } from 'src/utils/bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -18,10 +19,13 @@ export class UsersService {
 
     async createUser(createUserDetails: CreateUserParams): Promise<UserEntity> {
         try {
+            const password = await encodePassword(createUserDetails.password);
             const newUser = this.userRepository.create({
-                ...createUserDetails
+                ...createUserDetails, 
+                password
             });
     
+            console.log(newUser)
             return await this.userRepository.save(newUser)
         } catch(error) {
             console.error('Error Creating User : ', error);
@@ -57,10 +61,14 @@ export class UsersService {
     }
 
     async fetchUserById(id: number): Promise<UserEntity> {
-        return await this.userRepository.findOne({
+        return this.userRepository.findOne({
             where: {id: id},
             relations: ['profile', 'posts'],
         })
+    }
+
+    async fetchUserByEmail(email: string) : Promise<UserEntity> {
+        return this.userRepository.findOneBy({email});
     }
 
     async userExist(id: number): Promise<Boolean> {
