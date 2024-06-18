@@ -3,10 +3,12 @@ import { UsersModule } from './users/users.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import allEntities from './typeorm/all-entities';
+import { PassportModule } from '@nestjs/passport';
 
 @Module({
   imports: [
     UsersModule,
+    AuthModule,
     TypeOrmModule.forRoot({
       type: 'mysql',
       host: 'localhost',
@@ -17,7 +19,9 @@ import allEntities from './typeorm/all-entities';
       database: 'nestjs-db',
       synchronize: true
     }),
-    AuthModule
+    PassportModule.register({
+      session: true
+    })
   ],
   controllers: [],
   providers: [],

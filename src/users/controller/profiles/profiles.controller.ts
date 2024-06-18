@@ -11,9 +11,11 @@ import { CreatedApiResponseInterceptor } from 'src/common/interceptor/api-respon
 import { OkApiResponseInterceptor } from 'src/common/interceptor/api-response/ok-api-response.interceptor';
 import { ProfilesService } from 'src/users/service/profiles/profiles.service';
 import { HttpExceptionFilter } from 'src/common/filter/http-exception.filter';
+import { AuthenctedGuard } from 'src/auth/utils/local-auth.guard';
 
 @ApiTags('User Profile')
 @UseGuards(ProfilesGuard) // User Guard at Class Level
+@UseGuards(AuthenctedGuard)
 @UseInterceptors(ClassSerializerInterceptor)
 @UseFilters(new HttpExceptionFilter())
 @Controller('profiles')
