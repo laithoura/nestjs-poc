@@ -1,4 +1,4 @@
-import { BadRequestException, Body, ClassSerializerInterceptor, Controller, Get, HttpException, HttpStatus, Param, ParseIntPipe, Post, Put, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, ClassSerializerInterceptor, Controller, Get, HttpException, HttpStatus, Param, ParseIntPipe, Post, Put, UseFilters, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ApiCreatedObjectResponse, ApiOkArrayResponse, ApiOkObjectResponse } from 'src/common/api-doc/api-response.decorator';
 import { PostEntity } from 'src/typeorm/entities/post.entity';
@@ -8,10 +8,12 @@ import { PostsGuard } from 'src/users/guard/posts/posts.guard';
 import { CreatedApiResponseInterceptor } from 'src/common/interceptor/api-response/created-api-response.interceptor';
 import { OkApiResponseInterceptor } from 'src/common/interceptor/api-response/ok-api-response.interceptor';
 import { PostsService } from 'src/users/service/posts/posts.service';
+import { HttpExceptionFilter } from 'src/common/filter/http-exception.filter';
 
 @ApiTags('User Post')
 @UseGuards(PostsGuard) // User Guard at Class Level
 @UseInterceptors(ClassSerializerInterceptor)
+@UseFilters(new HttpExceptionFilter())
 @Controller('posts')
 export class PostsController {
 

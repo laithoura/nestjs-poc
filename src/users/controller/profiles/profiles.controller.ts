@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpException, HttpStatus, Param, Query, ParseIntPipe, Post, Put, UseGuards, UseInterceptors, ClassSerializerInterceptor, BadRequestException } from '@nestjs/common';
+import { Body, Controller, Get, HttpException, HttpStatus, Param, Query, ParseIntPipe, Post, Put, UseGuards, UseInterceptors, ClassSerializerInterceptor, BadRequestException, UseFilters } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PageOptionsDto } from 'src/common/dtos/page-options.dto';
 import { PageDto } from 'src/common/dtos/page.dto';
@@ -10,10 +10,12 @@ import { ProfilesGuard } from 'src/users/guard/profiles/profiles.guard';
 import { CreatedApiResponseInterceptor } from 'src/common/interceptor/api-response/created-api-response.interceptor';
 import { OkApiResponseInterceptor } from 'src/common/interceptor/api-response/ok-api-response.interceptor';
 import { ProfilesService } from 'src/users/service/profiles/profiles.service';
+import { HttpExceptionFilter } from 'src/common/filter/http-exception.filter';
 
 @ApiTags('User Profile')
 @UseGuards(ProfilesGuard) // User Guard at Class Level
 @UseInterceptors(ClassSerializerInterceptor)
+@UseFilters(new HttpExceptionFilter())
 @Controller('profiles')
 export class ProfilesController {
     constructor(private profilesService: ProfilesService) {

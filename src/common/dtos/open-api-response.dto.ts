@@ -7,6 +7,8 @@ export class ApiResponseDto<T> {
     @ApiProperty({default: 'Success'})
     message: string;
 
+    error: string;
+
     @ApiProperty()
     data: T;
 
