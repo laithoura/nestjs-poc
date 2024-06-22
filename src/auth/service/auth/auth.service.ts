@@ -9,7 +9,6 @@ export class AuthService {
     constructor(
         private readonly usersService: UsersService,
         private jwtService: JwtService) {
-        console.log('Init AuthService');
     }
 
     async validateUser(email: string, rawPassword: string): Promise<any> {
@@ -19,7 +18,7 @@ export class AuthService {
                 const isValidPassword = await comparePasswords(rawPassword, user.password);
                 if (isValidPassword) {
                     const { password, ...result } = user;
-                    return result;
+                    return {...result, roles: ['ADMIN', 'USER']};
                 }
             } catch(error) {
               console.error(error);

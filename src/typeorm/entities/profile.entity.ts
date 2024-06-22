@@ -1,9 +1,9 @@
-import { AbstractEntity } from 'src/common/entities/abstract.entity';
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 import { ApiProperty } from "@nestjs/swagger";
+import { Exclude } from 'class-transformer';
 
 @Entity('user_profiles')
-export class ProfileEntity extends AbstractEntity {
+export class ProfileEntity {
 
   @ApiProperty({default: 1})
   @PrimaryGeneratedColumn({name: 'id', type: 'bigint'})
@@ -24,5 +24,13 @@ export class ProfileEntity extends AbstractEntity {
   @ApiProperty()
   @Column({name: 'dob', type: 'timestamp', nullable: false, default: () => 'CURRENT_TIMESTAMP'})
   dob: Date;
+
+  @Exclude()
+  @Column({name: 'created_at', type: 'timestamp', nullable: false, insert: true, update: false, default: () => 'CURRENT_TIMESTAMP'})
+  createdAt: Date;
+
+  @Exclude()
+  @Column({name: 'updated_at', type: 'timestamp', nullable: true, insert: false, update: true})
+  updatedAt: Date;
 
 }

@@ -5,8 +5,6 @@ import { CreateUserDto } from 'src/users/dtos/create-user.dto';
 export class ValidateCreateUserPipe implements PipeTransform {
   transform(user: CreateUserDto, metadata: ArgumentMetadata) {
     console.log('Inside ValidateCreateUserPipe!');
-    console.log(user);
-    console.log(metadata);
     return user;
   }
 }

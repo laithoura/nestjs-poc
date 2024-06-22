@@ -9,7 +9,6 @@ import { ProfilesMiddleware } from './middlewares/profiles/profiles.middleware';
 import { PostsController } from './controller/posts/posts.controller';
 import { PostsService } from './service/posts/posts.service';
 import { PostsMiddleware } from './middlewares/posts/posts.middleware';
-import { NextFunction, Response } from 'express';
 import userEntities from 'src/typeorm/user-entities';
 
 @Module({
@@ -26,14 +25,6 @@ import userEntities from 'src/typeorm/user-entities';
 })
 export class UsersModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    // consumer.apply(UsersMiddleware).forRoutes('users') // By Main Path
-    // consumer.apply(UsersMiddleware).forRoutes(UsersController) //  By Controller
-    /** -> By Specific Route Path & RequestMethod
-    consumer.apply(UsersMiddleware).forRoutes({
-      path: 'users',
-      method: RequestMethod.GET
-    })
-    */
     consumer
       .apply(UsersMiddleware)
       .exclude({
@@ -49,13 +40,6 @@ export class UsersModule implements NestModule {
     consumer
       .apply(PostsMiddleware)
       .forRoutes(PostsController);
-
-
-    /* Test Arrow Function Middle */
-    consumer.apply((req: Request, res: Response, next: NextFunction) => {
-      console.log('Arrow Function Middleware');
-      next();
-    }).forRoutes(UsersController, ProfilesController, PostsController);
   }
 
 }

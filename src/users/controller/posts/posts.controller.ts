@@ -1,5 +1,5 @@
-import { BadRequestException, Body, ClassSerializerInterceptor, Controller, Get, Param, ParseIntPipe, Post, Put, UseFilters, UseGuards, UseInterceptors } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { BadRequestException, Body, ClassSerializerInterceptor, Controller, Get, Param, ParseIntPipe, Post, Put, Req, UseFilters, UseGuards, UseInterceptors } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ApiCreatedObjectResponse, ApiOkArrayResponse, ApiOkObjectResponse } from 'src/common/api-doc/api-response.decorator';
 import { PostEntity } from 'src/typeorm/entities/post.entity';
 import { CreateUserPostDto } from 'src/users/dtos/create-user-post.dto';
@@ -8,25 +8,23 @@ import { CreatedApiResponseInterceptor } from 'src/common/interceptor/api-respon
 import { OkApiResponseInterceptor } from 'src/common/interceptor/api-response/ok-api-response.interceptor';
 import { PostsService } from 'src/users/service/posts/posts.service';
 import { HttpExceptionFilter } from 'src/common/filter/http-exception.filter';
-import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
 
 @ApiTags('User Post')
-@UseGuards(JwtAuthGuard)
+@ApiBearerAuth('JWT')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseFilters(new HttpExceptionFilter())
 @Controller('posts')
 export class PostsController {
 
     constructor(private postsService: PostsService) {
-        console.log('Init Posts Service')
     }
 
     @Post()
     @ApiOperation({ summary: 'Create new post' })
     @ApiCreatedObjectResponse(PostEntity, 'Created Successfully')
     @UseInterceptors(CreatedApiResponseInterceptor)
-    async createUserPost(@Body() post: CreateUserPostDto) : Promise<PostEntity> {
-        return this.postsService.createUserPost(post);
+    async createUserPost(@Body() post: CreateUserPostDto, @Req() req) : Promise<PostEntity> {
+        return this.postsService.createUserPost(req.user.id, post);
     }
 
     @Put(':id')
@@ -41,15 +39,7 @@ export class PostsController {
         return this.postsService.updateUserPost(id, post);
     }
 
-    @Get()
-    @ApiOperation({ summary: 'Get All Posts' })
-    @ApiOkArrayResponse(PostEntity, 'Success')
-    @UseInterceptors(OkApiResponseInterceptor)
-    async getAllUserPost() : Promise<PostEntity[]> {
-        return this.postsService.fetchAllUserPosts()
-    }
-
-    @Get(':id')
+    @Get('id/:id')
     @ApiOperation({ summary: 'Get Post By Id' })
     @ApiOkObjectResponse(PostEntity, 'Success')
     @UseInterceptors(OkApiResponseInterceptor)
@@ -57,12 +47,20 @@ export class PostsController {
         return this.postsService.fetchUserPostById(id)
     }
 
-    @Get('/users/:userId')
-    @ApiOperation({ summary: 'Get Posts By User Id' })
+    @Get('all')
+    @ApiOperation({ summary: 'Get All Posts' })
+    @ApiOkArrayResponse(PostEntity, 'Success')
+    @UseInterceptors(OkApiResponseInterceptor)
+    async getAllUserPost() : Promise<PostEntity[]> {
+        return this.postsService.fetchAllUserPosts()
+    }
+
+    @Get('own')
+    @ApiOperation({ summary: 'Get Own Posts' })
     @ApiOkObjectResponse(PostEntity, 'Success')
     @UseInterceptors(OkApiResponseInterceptor)
-    async getUserPostByUserId(@Param('userId', ParseIntPipe) userId: number) : Promise<PostEntity[]> {
-        return this.postsService.fetchUserPostByUserId(userId);
+    async getUserPostByUserId(@Req() req) : Promise<PostEntity[]> {
+        return this.postsService.fetchUserPostByUserId(req.user.id);
     }
 
 }

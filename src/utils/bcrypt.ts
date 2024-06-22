@@ -1,4 +1,4 @@
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 
 export async function encodePassword(rawPassword: string) {
     const SALT = bcrypt.genSaltSync();

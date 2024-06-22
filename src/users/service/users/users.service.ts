@@ -14,10 +14,14 @@ export class UsersService {
     constructor(
         @InjectRepository(UserEntity) private userRepository: Repository<UserEntity>,
         @InjectRepository(ProfileEntity) private profileRepository: Repository<ProfileEntity>) {
-        console.log('Init UsersService Constructor');
     }
 
     async createUser(createUserDetails: CreateUserParams): Promise<UserEntity> {
+        const duplicateEmail = await this.userRepository.countBy({email: createUserDetails.email});
+        if (duplicateEmail) {
+            throw new BadRequestException('Email already exist!');
+        }
+        
         try {
             const password = await encodePassword(createUserDetails.password);
             const newUser = this.userRepository.create({
@@ -25,7 +29,6 @@ export class UsersService {
                 password
             });
     
-            console.log(newUser)
             return await this.userRepository.save(newUser)
         } catch(error) {
             console.error('Error Creating User : ', error);

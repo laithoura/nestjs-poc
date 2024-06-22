@@ -1,52 +1,29 @@
-import { Body, Controller, Get, HttpStatus, Param, Query, ParseIntPipe, Post, Put, UseGuards, UseInterceptors, ClassSerializerInterceptor, BadRequestException, UseFilters } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, HttpStatus, Param, Query, ParseIntPipe, Post, UseGuards, UseInterceptors, ClassSerializerInterceptor, UseFilters, Req } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PageOptionsDto } from 'src/common/dtos/page-options.dto';
 import { PageDto } from 'src/common/dtos/page.dto';
-import { ApiOkObjectResponse, ApiOkArrayResponse, ApiPaginatedResponse, ApiCreatedObjectResponse } from 'src/common/api-doc/api-response.decorator';
+import { ApiOkObjectResponse, ApiOkArrayResponse, ApiPaginatedResponse } from 'src/common/api-doc/api-response.decorator';
 import { ProfileEntity } from 'src/typeorm/entities/profile.entity';
-import { CreateUserProfileDto } from 'src/users/dtos/create-user-profile.dto';
-import { UpdateUserProfileDto } from 'src/users/dtos/update-user-profile.dto';
-import { CreatedApiResponseInterceptor } from 'src/common/interceptor/api-response/created-api-response.interceptor';
+import { ModifyUserProfileDto } from 'src/users/dtos/modify-user-profile.dto';
 import { OkApiResponseInterceptor } from 'src/common/interceptor/api-response/ok-api-response.interceptor';
 import { ProfilesService } from 'src/users/service/profiles/profiles.service';
-import { HttpExceptionFilter } from 'src/common/filter/http-exception.filter';
-import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
 
 @ApiTags('User Profile')
-@UseGuards(JwtAuthGuard)
+@ApiBearerAuth('JWT')
 @UseInterceptors(ClassSerializerInterceptor)
-@UseFilters(new HttpExceptionFilter())
 @Controller('profiles')
 export class ProfilesController {
     constructor(private profilesService: ProfilesService) {
-        console.log('Init Profiles Service')
     }
 
     @Post()
-    @ApiOperation({ summary: 'Create new user profile' })
-    @ApiCreatedObjectResponse(ProfileEntity, 'Created Successfully')
-    @UseInterceptors(CreatedApiResponseInterceptor)
-    async createUserProfile(@Body() userProfile: CreateUserProfileDto) : Promise<ProfileEntity> {
-        return this.profilesService.createUserProfile(userProfile.userId, userProfile);
-    }
-
-    @Put(':id')
-    @ApiOperation({ summary: 'Update user profile' })
-    @ApiOkObjectResponse(ProfileEntity, 'Updated Successfully')
+    @ApiOperation({ summary: 'Modify user profile' })
+    @ApiOkObjectResponse(ProfileEntity, 'Modify Successfully')
     @UseInterceptors(OkApiResponseInterceptor)
-    async updateUserProfile(
-        @Param('id', ParseIntPipe) id: number,
-        @Body() userProfile: UpdateUserProfileDto) :Promise<ProfileEntity> {
-        if (id != userProfile.id) {
-            throw new BadRequestException('Profile Id ' + id + ' not found');
-        }
-
-        const updatedUserProfile = await this.profilesService.updateUserProfile(id, userProfile.userId, userProfile);
-        if (!updatedUserProfile) {
-            throw new BadRequestException('Profile Id ' + id + ' not found');
-        }
-
-        return updatedUserProfile;
+    async modifyUserProfile(
+        @Body() userProfile: ModifyUserProfileDto,
+        @Req() req) :Promise<ProfileEntity> {
+        return this.profilesService.modifyUserProfile(req.user.id, userProfile);
     }
 
     @Get('all')
@@ -56,7 +33,6 @@ export class ProfilesController {
     async fetchAllProfiles() : Promise<ProfileEntity[]> {
         return this.profilesService.fetchAllProfiles()
     }
-
 
     @Get('paging')
     @ApiOperation({summary: 'Get User Profiles Pagination'})

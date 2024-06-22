@@ -1,5 +1,5 @@
 import { BadRequestException, Body, ClassSerializerInterceptor, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseBoolPipe, ParseIntPipe, Post, Put, Query, UseFilters, UseGuards, UseInterceptors } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UserEntity } from 'src/typeorm/entities/user.entity';
 import { CreateUserDto } from 'src/users/dtos/create-user.dto';
 import { PageDto } from 'src/common/dtos/page.dto';
@@ -10,9 +10,11 @@ import { ApiOkObjectResponse, ApiOkArrayResponse, ApiPaginatedResponse, ApiCreat
 import { OkApiResponseInterceptor } from 'src/common/interceptor/api-response/ok-api-response.interceptor';
 import { CreatedApiResponseInterceptor } from 'src/common/interceptor/api-response/created-api-response.interceptor';
 import { HttpExceptionFilter } from 'src/common/filter/http-exception.filter';
-import { PublicRoute } from 'src/auth/decorator/public-key.decortor';
+import { Throttle } from '@nestjs/throttler';
+import { PublicRoute } from 'src/auth/decorators/public-route.decortor';
 
 @ApiTags('Users')
+@ApiBearerAuth('JWT')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseFilters(new HttpExceptionFilter())
 @Controller('users')
@@ -20,7 +22,7 @@ export class UsersController {
 
     constructor(private usersService: UsersService) {}
 
-    // @UseGuards(JwtAuthGuard) // Use Guard at Method Level
+    @Throttle({ default: { limit: 100, ttl: 1000 } })
     @PublicRoute()
     @Post()
     @ApiOperation({ summary: 'Create new user' })

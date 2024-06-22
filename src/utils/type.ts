@@ -15,15 +15,7 @@ type UpdateUserParams = {
     password: string
 }
 
-type CreateUserProfileParams = {
-    firstName: string
-    lastName: string
-    age: number
-    dob: string
-  }
-
-type UpdateUserProfileParams = {
-  id: number
+type ModifyUserProfileParams = {
   firstName: string
   lastName: string
   age: number
@@ -31,7 +23,6 @@ type UpdateUserProfileParams = {
 }
 
 type CreateUserPostParams = {
-    userId: number
     title: string
     description: string
 }

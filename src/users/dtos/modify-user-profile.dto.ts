@@ -1,19 +1,7 @@
 import { IsNotEmpty, IsNumber, Max, MaxLength, Min, MinLength } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
 
-export class UpdateUserProfileDto {
-
-  @ApiProperty({default: 1, required: true, minimum: 1})
-  @Min(1)
-  @IsNotEmpty()
-  @Min(1)
-  @IsNotEmpty()
-  id: number;
-
-  @ApiProperty({default: 1, required: true, minimum: 1})
-  @Min(1)
-  @IsNotEmpty()
-  userId: number;
+export class ModifyUserProfileDto {
 
   @ApiProperty({default: 'Frist Name', required: true, minLength: 1, maxLength: 100})
   @MinLength(1)

@@ -13,38 +13,31 @@ export class ProfilesService {
     constructor(
         private usersService: UsersService,
         @InjectRepository(ProfileEntity) private profileRepository: Repository<ProfileEntity>) {
-        console.log('Init Profiles Service')
     }
 
-    async createUserProfile(userId: number, createProfile: CreateUserProfileParams): Promise<ProfileEntity> {
-        await this.usersService.userExistOrElseThrowException(userId);
-        const newProfile = this.profileRepository.create({
-            ...createProfile,
-            createdAt: new Date()
-        });
-
-        const savedProfile = await this.profileRepository.save(newProfile);
-    
-        this.usersService.updateUserProfile(userId, savedProfile.id);
-
-        return savedProfile;
-    }
-
-    async updateUserProfile(id: number, userId: number, updateProfile: UpdateUserProfileParams): Promise<ProfileEntity> {
-        const exist = await this.profileRepository.countBy({id}) > 0;
-        if (!exist) {
-            throw new BadRequestException('Profile Id ' + id + ' not found');
+    async modifyUserProfile(userId: number, modifyUserProfile: ModifyUserProfileParams): Promise<ProfileEntity> {
+        const user = await this.usersService.fetchUserById(userId);
+        if (!user) {
+            throw new BadRequestException('User Id ' + userId + ' not found');
         }
 
-        try {    
-            delete updateProfile['userId'];
-            await this.profileRepository.update({ id }, { ...updateProfile, updatedAt: new Date() });
-            await this.usersService.updateUserProfile(userId, id);
-            return await this.fetchUserProfileById(id);
-        } catch(error) {
-            console.error('Error Updating User Profile : ', error);
-            throw new BadRequestException('Failed to update user profile');
-        }
+        if (!user.profile) {
+            const newProfile = this.profileRepository.create({
+                ...modifyUserProfile,
+                createdAt: new Date()
+            });
+            const savedProfile = await this.profileRepository.save(newProfile);
+            this.usersService.updateUserProfile(userId, savedProfile.id);
+            return await this.fetchUserProfileById(savedProfile.id);
+        } else {
+            try {
+                await this.profileRepository.update({ id: user.id }, { ...modifyUserProfile, updatedAt: new Date() });
+                return await this.fetchUserProfileById(user.id);
+            } catch(error) {
+                console.error('Error Updating User Profile : ', error);
+                throw new BadRequestException('Failed to update user profile');
+            }
+        }        
     }
 
     async fetchUserProfileById(id: number): Promise<ProfileEntity> {

@@ -1,20 +1,12 @@
 services:
   nestjs-api:
-    image: nestjs-api
+    image: nestjs-api-prod
     container_name: ${API_CONTAINER_NAME}
-    restart: always
-    build:
-      dockerfile: Dockerfile
-      context: .
-    volumes:
-      - ./:/usr/src/app
-    env_file:
-    - .env
-    environment:
-      - PORT=${API_PORT}
-      - NODE_ENV=development
     ports:
       - ${API_EXPOSE_PORT}:${API_PORT}
+    environment:
+      - PORT=${API_PORT}
+      - NODE_ENV=production
     depends_on:
       - ${DB_SERVICE_NAME}
       - ${REDIS_SERVICE_NAME}
@@ -35,7 +27,7 @@ services:
       - nestjs-db:/var/lib/mysql
     networks:
       - nestjs-network
-  nestjs-redis:
+  nestjs-redis: # Name of container
     image: redis
     container_name: ${REDIS_CONTAINER_NAME}
     ports:

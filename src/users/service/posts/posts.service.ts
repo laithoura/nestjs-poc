@@ -10,16 +10,14 @@ export class PostsService {
     constructor(
         @InjectRepository(PostEntity) private postRepository: Repository<PostEntity>,
         private usersService: UsersService) {
-        console.log('Init Posts Service');
     }
 
-    async createUserPost(createPost: CreateUserPostParams) : Promise<PostEntity> {
-        const user = await this.usersService.fetchUserById(createPost.userId);
+    async createUserPost(userId: number, createPost: CreateUserPostParams) : Promise<PostEntity> {
+        const user = await this.usersService.fetchUserById(userId);
         if (!user) {
-            throw new BadRequestException('User Id ' + createPost.userId + ' not found');
+            throw new BadRequestException('User Id ' + userId + ' not found');
         }
 
-        delete createPost['userId'];
         const newPost = this.postRepository.create({...createPost, user, createdAt: new Date()});
         const savedPost = await this.postRepository.save(newPost);
         return this.fetchUserPostById(savedPost.id);
@@ -31,7 +29,6 @@ export class PostsService {
             throw new BadRequestException('Post Id ' + id + ' not found');
         }
 
-        delete updatePost['userId'];
         this.postRepository.update({id}, {...updatePost, updatedAt: new Date()});
         return this.fetchUserPostById(id);
     }

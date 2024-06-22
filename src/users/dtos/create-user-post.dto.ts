@@ -1,13 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsNumber, MaxLength, Min, MinLength } from "class-validator";
+import { IsNotEmpty, MaxLength, MinLength } from "class-validator";
 
 export class CreateUserPostDto {
-
-    @ApiProperty({default: 1, required: true, minimum: 1})
-    @IsNumber()
-    @Min(1)
-    @IsNotEmpty()
-    userId: number
 
     @ApiProperty({default: 'Post Title', required: true, minLength: 1, maxLength: 255})
     @MinLength(1)

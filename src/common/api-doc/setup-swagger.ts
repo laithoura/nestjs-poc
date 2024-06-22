@@ -5,7 +5,8 @@ export function setupSwagger(app: INestApplication): void {
   const options = new DocumentBuilder()
     .setTitle('NestJS API Doc')
     .setVersion('1.0.0')
-    .setContact('Thoura Lai', 'https://www.linkedin.com/in/thoura-lai-0700a2155/', 'laithoura.web@gmail.com')
+    .setContact('Thoura Lai', 'https://github.com/laithoura/nestjs-poc/tree/master', 'laithoura.web@gmail.com')
+    .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 'JWT')
     .build();
 
   const document = SwaggerModule.createDocument(app, options);

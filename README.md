@@ -31,6 +31,10 @@
 - jwt
 - swagger
 
+### API Doc: http://localhost:3001/doc
+
+![api-doc-image](doc/api-doc-2.png)
+
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
