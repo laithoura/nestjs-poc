@@ -1,29 +1,37 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { AuthController } from './controllers/auth/auth.controller';
 import { AuthService } from './service/auth/auth.service';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { UserEntity } from 'src/typeorm/entities/user.entity';
-import { LocalStrategy } from './utils/local-stategry';
-import { UsersService } from 'src/users/service/users/users.service';
-import { ProfileEntity } from 'src/typeorm/entities/profile.entity';
-import { SessionSerializer } from './utils/session.serializer';
+import { LocalStrategy } from './strategy/local.stategry';
+import { PassportModule } from '@nestjs/passport';
+import { UsersModule } from 'src/users/users.module';
+import { JwtModule } from '@nestjs/jwt';
+import { jwtConfig } from 'src/auth/constants/jwt.contant';
+import { JwtStrategy } from './strategy/jwt.stategy';
+import { LoginMiddleware } from './middlewars/login/login.middleware';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([UserEntity, ProfileEntity]), 
+    UsersModule,
+    PassportModule,
+    JwtModule.register({
+      secret: jwtConfig.secret,
+      signOptions: { expiresIn: '120s'},
+    }),
   ],
   controllers: [AuthController],
   providers: [
-    {
-      provide: 'USERS_SERVICE',
-      useClass: UsersService
-    },
-    {
-      provide: 'AUTH_SERVICE',
-      useClass: AuthService
-    }, 
+    AuthService,
     LocalStrategy,
-    SessionSerializer
+    JwtStrategy
   ],
 })
-export class AuthModule {}
+export class AuthModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(LoginMiddleware)
+    .forRoutes({
+      path: '/auth/login',
+      method: RequestMethod.POST
+    });
+  }
+  
+}

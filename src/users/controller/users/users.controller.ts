@@ -4,18 +4,15 @@ import { UserEntity } from 'src/typeorm/entities/user.entity';
 import { CreateUserDto } from 'src/users/dtos/create-user.dto';
 import { PageDto } from 'src/common/dtos/page.dto';
 import { PageOptionsDto } from 'src/common/dtos/page-options.dto';
-import { UpdateUserDto } from 'src/users/dtos/update-user.dto';
-import { UsersGuard } from 'src/users/guard/users/users.guard';
 import { ValidateCreateUserPipe } from 'src/users/pipe/validate-create-user/validate-create-user.pipe';
-import { ValidateUpdateUserPipe } from 'src/users/pipe/validate-update-user/validate-update-user.pipe';
 import { UsersService } from 'src/users/service/users/users.service';
 import { ApiOkObjectResponse, ApiOkArrayResponse, ApiPaginatedResponse, ApiCreatedObjectResponse } from 'src/common/api-doc/api-response.decorator';
 import { OkApiResponseInterceptor } from 'src/common/interceptor/api-response/ok-api-response.interceptor';
 import { CreatedApiResponseInterceptor } from 'src/common/interceptor/api-response/created-api-response.interceptor';
 import { HttpExceptionFilter } from 'src/common/filter/http-exception.filter';
+import { PublicRoute } from 'src/auth/decorator/public-key.decortor';
 
 @ApiTags('Users')
-@UseGuards(UsersGuard) // User Guard at Class Level
 @UseInterceptors(ClassSerializerInterceptor)
 @UseFilters(new HttpExceptionFilter())
 @Controller('users')
@@ -23,7 +20,8 @@ export class UsersController {
 
     constructor(private usersService: UsersService) {}
 
-    // @UseGuards(UsersGuard) // User Guard at Method Level
+    // @UseGuards(JwtAuthGuard) // Use Guard at Method Level
+    @PublicRoute()
     @Post()
     @ApiOperation({ summary: 'Create new user' })
     @ApiCreatedObjectResponse(UserEntity, 'Created Successfully')
@@ -31,25 +29,6 @@ export class UsersController {
     async createUserBody(
         @Body(ValidateCreateUserPipe) user: CreateUserDto) : Promise<UserEntity> {
         return this.usersService.createUser(user);
-    }
-
-    @Put(':id')
-    @ApiOperation({ summary: 'Update user' })
-    @ApiOkObjectResponse(UserEntity, 'Updated Successfully')
-    @UseInterceptors(OkApiResponseInterceptor)
-    async updateUserBody(
-        @Param('id', ParseIntPipe) id: number, 
-        @Body(ValidateUpdateUserPipe) user: UpdateUserDto) : Promise<UserEntity> {
-        if (id != user.id) {
-            throw new BadRequestException('User Id ' + id + ' not found');
-        }
-
-        const updatedUser = await this.usersService.updateUser(id, user);
-        if (!updatedUser) {
-            throw new BadRequestException('User Id ' + id + ' not found');
-        }
-
-        return updatedUser;
     }
 
     @Get('all')

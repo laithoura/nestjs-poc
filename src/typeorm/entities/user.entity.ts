@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, Index, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { ProfileEntity } from "./profile.entity";
 import { PostEntity } from "./post.entity";
 import { AbstractEntity } from "src/common/entities/abstract.entity";
@@ -12,6 +12,7 @@ export class UserEntity extends AbstractEntity {
     @PrimaryGeneratedColumn({name: 'id', type: 'bigint'})
     id: number;
 
+    @Index('user_email_index')
     @ApiProperty({default: 'dev@gmail.com'})
     @Column({name: 'email', type: 'varchar', nullable: false, unique: true, length: 200})
     email: string;

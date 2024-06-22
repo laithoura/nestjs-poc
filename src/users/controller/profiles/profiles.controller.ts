@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpException, HttpStatus, Param, Query, ParseIntPipe, Post, Put, UseGuards, UseInterceptors, ClassSerializerInterceptor, BadRequestException, UseFilters } from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Param, Query, ParseIntPipe, Post, Put, UseGuards, UseInterceptors, ClassSerializerInterceptor, BadRequestException, UseFilters } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PageOptionsDto } from 'src/common/dtos/page-options.dto';
 import { PageDto } from 'src/common/dtos/page.dto';
@@ -6,16 +6,14 @@ import { ApiOkObjectResponse, ApiOkArrayResponse, ApiPaginatedResponse, ApiCreat
 import { ProfileEntity } from 'src/typeorm/entities/profile.entity';
 import { CreateUserProfileDto } from 'src/users/dtos/create-user-profile.dto';
 import { UpdateUserProfileDto } from 'src/users/dtos/update-user-profile.dto';
-import { ProfilesGuard } from 'src/users/guard/profiles/profiles.guard';
 import { CreatedApiResponseInterceptor } from 'src/common/interceptor/api-response/created-api-response.interceptor';
 import { OkApiResponseInterceptor } from 'src/common/interceptor/api-response/ok-api-response.interceptor';
 import { ProfilesService } from 'src/users/service/profiles/profiles.service';
 import { HttpExceptionFilter } from 'src/common/filter/http-exception.filter';
-import { AuthenctedGuard } from 'src/auth/utils/local-auth.guard';
+import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
 
 @ApiTags('User Profile')
-@UseGuards(ProfilesGuard) // User Guard at Class Level
-@UseGuards(AuthenctedGuard)
+@UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
 @UseFilters(new HttpExceptionFilter())
 @Controller('profiles')

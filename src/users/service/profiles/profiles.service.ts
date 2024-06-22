@@ -1,9 +1,8 @@
-import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProfileEntity } from 'src/typeorm/entities/profile.entity';
 import { Repository } from 'typeorm';
 import { UsersService } from '../users/users.service';
-import { PostEntity } from 'src/typeorm/entities/post.entity';
 import { PageDto } from 'src/common/dtos/page.dto';
 import { PageOptionsDto } from 'src/common/dtos/page-options.dto';
 import { PageMetaDto } from 'src/common/dtos/page-meta.dto';

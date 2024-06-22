@@ -3,7 +3,8 @@ import { UsersModule } from './users/users.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import allEntities from './typeorm/all-entities';
-import { PassportModule } from '@nestjs/passport';
+import { APP_GUARD } from '@nestjs/core';
+import { JwtAuthGuard } from './auth/guard/jwt-auth.guard';
 
 @Module({
   imports: [
@@ -18,12 +19,14 @@ import { PassportModule } from '@nestjs/passport';
       entities: allEntities,
       database: 'nestjs-db',
       synchronize: true
-    }),
-    PassportModule.register({
-      session: true
     })
   ],
   controllers: [],
-  providers: [],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+  ],
 })
 export class AppModule {}

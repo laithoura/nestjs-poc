@@ -1,26 +1,31 @@
-import { Controller, Get, HttpCode, HttpStatus, Post, Req, Session, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Req, UseGuards, UseInterceptors } from '@nestjs/common';
+import { AuthService } from 'src/auth/service/auth/auth.service';
+import { LocalAuthGuard } from 'src/auth/guard/local-auth.guard';
+import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
 import { Request } from 'express';
-import { AuthenctedGuard, LocalAuthGuard } from 'src/auth/utils/local-auth.guard';
+import { OkApiResponseInterceptor } from 'src/common/interceptor/api-response/ok-api-response.interceptor';
+import { PublicRoute } from 'src/auth/decorator/public-key.decortor';
 
 @Controller('auth')
 export class AuthController {
 
-    @HttpCode(HttpStatus.OK)
+    constructor(private authService: AuthService) {}
+
+    @PublicRoute()
     @Post('login')
     @UseGuards(LocalAuthGuard)
+    @UseInterceptors(OkApiResponseInterceptor)
     async login(@Req() req: Request) {
-        console.log('Login Request: ', req.body);
+        return {
+            ... await this.authService.login(req.user),
+            user: req.user
+        };
     }
 
-    @Get('session')
-    @UseGuards(AuthenctedGuard)
-    async getAuthSession(@Session() session : Record<string, any>) {
-        return session;
-    }
-
-    @Get('user')
-    @UseGuards(AuthenctedGuard)
-    async getAuthStatus(@Req() req: Request): Promise<Express.User> {
+    @Get('me')
+    @UseGuards(JwtAuthGuard)
+    @UseInterceptors(OkApiResponseInterceptor)
+    async getAuthStatus(@Req() req): Promise<any> {
         return req.user;
     }
 }

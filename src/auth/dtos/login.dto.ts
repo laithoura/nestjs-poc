@@ -1,12 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsEmail, IsNotEmpty, IsNumber, Max, MaxLength, Min, MinLength } from "class-validator";
+import { IsEmail, IsNotEmpty, MaxLength, MinLength } from "class-validator";
 
-export class UpdateUserDto {
-    @ApiProperty({default: 1, required: true, minimum: 1})
-    @IsNumber()
-    @Min(1)
-    @IsNotEmpty()
-    id: number;
+export class LoginDto {
 
     @ApiProperty({default: 'dev@gmail.com', required: true, minLength: 1, maxLength: 200})
     @MinLength(1)
@@ -20,4 +15,9 @@ export class UpdateUserDto {
     @MaxLength(100)
     @IsNotEmpty()
     password: string;
+
+    constructor(email: string, password: string) {
+        this.email = email;
+        this.password = password;
+    }
 }

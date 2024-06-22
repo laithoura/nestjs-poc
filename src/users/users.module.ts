@@ -15,7 +15,14 @@ import userEntities from 'src/typeorm/user-entities';
 @Module({
   imports: [TypeOrmModule.forFeature(userEntities)],
   controllers: [UsersController, ProfilesController, PostsController],
-  providers: [UsersService, ProfilesService, PostsService]
+  providers: [
+    UsersService,
+    ProfilesService,
+    PostsService
+  ],
+  exports: [
+    UsersService
+  ]
 })
 export class UsersModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

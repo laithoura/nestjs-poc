@@ -1,19 +1,17 @@
-import { BadRequestException, Body, ClassSerializerInterceptor, Controller, Get, HttpException, HttpStatus, Param, ParseIntPipe, Post, Put, UseFilters, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, ClassSerializerInterceptor, Controller, Get, Param, ParseIntPipe, Post, Put, UseFilters, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ApiCreatedObjectResponse, ApiOkArrayResponse, ApiOkObjectResponse } from 'src/common/api-doc/api-response.decorator';
 import { PostEntity } from 'src/typeorm/entities/post.entity';
 import { CreateUserPostDto } from 'src/users/dtos/create-user-post.dto';
 import { UpdateUserPostDto } from 'src/users/dtos/update-user-post.dto';
-import { PostsGuard } from 'src/users/guard/posts/posts.guard';
 import { CreatedApiResponseInterceptor } from 'src/common/interceptor/api-response/created-api-response.interceptor';
 import { OkApiResponseInterceptor } from 'src/common/interceptor/api-response/ok-api-response.interceptor';
 import { PostsService } from 'src/users/service/posts/posts.service';
 import { HttpExceptionFilter } from 'src/common/filter/http-exception.filter';
-import { AuthenctedGuard } from 'src/auth/utils/local-auth.guard';
+import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
 
 @ApiTags('User Post')
-@UseGuards(PostsGuard) // User Guard at Class Level
-@UseGuards(AuthenctedGuard)
+@UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
 @UseFilters(new HttpExceptionFilter())
 @Controller('posts')
