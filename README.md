@@ -1,2 +1,7 @@
 # nestjs-poc
-nestjs, typeorm, mysql, passport, jwt, swagger
+- nestjs
+- typeorm
+- mysql
+- passport
+- jwt
+- swagger
